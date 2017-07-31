@@ -1,6 +1,6 @@
 #include <mruby.h>
 #include <errno.h>
-#include "libhydrogen/hydrogen.c"
+#include "../deps/libhydrogen/hydrogen.c"
 #include <mruby/error.h>
 #include <mruby/value.h>
 #include <mruby/class.h>
