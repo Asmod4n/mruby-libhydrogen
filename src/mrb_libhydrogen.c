@@ -1,3 +1,4 @@
+#include <mruby/hydrogen.h>
 #include "mrb_libhydrogen.h"
 
 static mrb_value
@@ -70,8 +71,8 @@ mrb_hydro_hash_init(mrb_state *mrb, mrb_value self)
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_hash_CONTEXTBYTES, "ctx");
   size_t key_len = mrb_hydro_check_length_between(mrb, RSTRING_LEN(key), hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
 
-  hydro_hash_state *state = mrb_realloc(mrb, DATA_PTR(self), sizeof(*state));
-  mrb_data_init(self, state, &mrb_hydro_hash_type);
+  hydro_hash_state *state = (hydro_hash_state *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*state));
+  mrb_data_init(self, state, &mrb_hydro_hash_state);
 
   int rc = hydro_hash_init(state, ctx, (uint8_t *) RSTRING_PTR(key), key_len);
   assert(rc == 0);
@@ -209,6 +210,147 @@ mrb_hydro_kdf_derive_from_key(mrb_state *mrb, mrb_value hydro_kdf_module)
   return subkey;
 }
 
+static mrb_value
+mrb_hydro_kx_state_new(mrb_state *mrb, mrb_value self)
+{
+  hydro_kx_state *state = (hydro_kx_state *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*state));
+  mrb_data_init(self, state, &mrb_hydro_kx_state);
+
+  return self;
+}
+
+static mrb_value
+mrb_hydro_kx_xx_1(mrb_state *mrb, mrb_value self)
+{
+  char *psk = NULL;
+  mrb_int psk_len = 0;
+  mrb_get_args(mrb, "|s!", &psk, &psk_len);
+  if (psk) {
+    mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
+  }
+
+  mrb_value response1 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE1BYTES);
+  int rc = hydro_kx_xx_1(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
+    (uint8_t *) RSTRING_PTR(response1),
+    (uint8_t *) psk);
+  assert(rc == 0);
+  return response1;
+}
+
+static mrb_value
+mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
+{
+  char *response1, *psk = NULL;
+  mrb_int response1_len, psk_len = 0;
+  hydro_kx_keypair *static_kp;
+  mrb_get_args(mrb, "sd|s!", &response1, &response1_len, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, response1_len, hydro_kx_RESPONSE1BYTES, "response1");
+  if (psk) {
+    mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
+  }
+
+  mrb_value response2 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE2BYTES);
+  int rc = hydro_kx_xx_2(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
+    (uint8_t *) RSTRING_PTR(response2),
+    (uint8_t *) response1,
+    (uint8_t *) psk,
+    static_kp);
+
+  if (rc != 0) {
+    mrb_raise(mrb, E_HYDRO_KX_ERROR, "Key Exchange Error");
+  }
+
+  return response2;
+}
+
+static mrb_value
+mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
+{
+  char *response2, *psk = NULL;
+  mrb_int response2_len, psk_len = 0;
+  hydro_kx_keypair *static_kp;
+  mrb_get_args(mrb, "sd|s!", &response2, &response2_len, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, response2_len, hydro_kx_RESPONSE2BYTES, "response2");
+  if (psk) {
+    mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
+  }
+
+  hydro_kx_session_keypair kp;
+  mrb_value out = mrb_hash_new_capa(mrb, 4);
+  mrb_value rx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_value tx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_value response3 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE3BYTES);
+  mrb_value peer_static_pk = mrb_str_new(mrb, NULL, hydro_kx_PUBLICKEYBYTES);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "rx")), rx);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "tx")), tx);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "response3")), response3);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "peer_static_pk")), peer_static_pk);
+
+  int rc = hydro_kx_xx_3(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
+    &kp,
+   (uint8_t *) RSTRING_PTR(response3),
+   (uint8_t *) RSTRING_PTR(peer_static_pk),
+   (uint8_t *) response2,
+   (uint8_t *) psk,
+   static_kp);
+
+  if (rc != 0) {
+    mrb_raise(mrb, E_HYDRO_KX_ERROR, "Key Exchange Error");
+  }
+
+  memcpy(RSTRING_PTR(rx), kp.rx, hydro_kx_SESSIONKEYBYTES);
+  memcpy(RSTRING_PTR(tx), kp.tx, hydro_kx_SESSIONKEYBYTES);
+
+  return out;
+}
+
+static mrb_value
+mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
+{
+  char *response3, *psk = NULL;
+  mrb_int response3_len, psk_len = 0;
+  mrb_get_args(mrb, "s|s!", &response3, &response3_len, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, response3_len, hydro_kx_RESPONSE3BYTES, "response3");
+  if (psk) {
+    mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
+  }
+
+  hydro_kx_session_keypair kp;
+  mrb_value out = mrb_hash_new_capa(mrb, 3);
+  mrb_value rx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_value tx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_value peer_static_pk = mrb_str_new(mrb, NULL, hydro_kx_PUBLICKEYBYTES);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "rx")), rx);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "tx")), tx);
+  mrb_hash_set(mrb, out, mrb_symbol_value(mrb_intern_lit(mrb, "peer_static_pk")), peer_static_pk);
+
+  int rc = hydro_kx_xx_4(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
+    &kp,
+    (uint8_t *) RSTRING_PTR(peer_static_pk),
+    (uint8_t *) response3,
+    (uint8_t *) psk);
+
+  if (rc != 0) {
+    mrb_raise(mrb, E_HYDRO_KX_ERROR, "Key Exchange Error");
+  }
+
+  memcpy(RSTRING_PTR(rx), kp.rx, hydro_kx_SESSIONKEYBYTES);
+  memcpy(RSTRING_PTR(tx), kp.tx, hydro_kx_SESSIONKEYBYTES);
+
+  return out;
+}
+
+static mrb_value
+mrb_hydro_kx_keygen(mrb_state *mrb, mrb_value self)
+{
+  hydro_kx_keypair *keypair = (hydro_kx_keypair *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*keypair));
+  mrb_data_init(self, keypair, &mrb_hydro_kx_keypair);
+
+  hydro_kx_keygen(keypair);
+
+  return self;
+}
+
 void
 mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
 {
@@ -217,7 +359,7 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
       mrb_sys_fail(mrb, "hydro_init");
   }
 
-  struct RClass *randombytes_mod, *hydro_mod, *hydro_hash_cl, *hydro_secretbox_mod, *hydro_kdf_mod, *hydro_sign_cl, *hydro_kx_cl;
+  struct RClass *randombytes_mod, *hydro_mod, *hydro_error_cl, *hydro_hash_cl, *hydro_secretbox_mod, *hydro_kdf_mod, *hydro_sign_cl, *hydro_kx_cl, *hydro_kx_keypair_cl;
 
   randombytes_mod = mrb_define_module(mrb, "RandomBytes");
   mrb_define_const(mrb, randombytes_mod, "SEEDBYTES", mrb_fixnum_value(randombytes_SEEDBYTES));
@@ -227,6 +369,7 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
   mrb_define_module_function(mrb, randombytes_mod, "buf_deterministic", mrb_randombytes_buf_deterministic, MRB_ARGS_ARG(2, 1));
 
   hydro_mod = mrb_define_module(mrb, "Hydro");
+  hydro_error_cl = mrb_define_class_under(mrb, hydro_mod, "Error", E_RUNTIME_ERROR);
 
   hydro_hash_cl = mrb_define_class_under(mrb, hydro_mod, "Hash", mrb->object_class);
   MRB_SET_INSTANCE_TT(hydro_hash_cl, MRB_TT_DATA);
@@ -271,6 +414,7 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
 
   hydro_kx_cl = mrb_define_class_under(mrb, hydro_mod, "Kx", mrb->object_class);
   MRB_SET_INSTANCE_TT(hydro_kx_cl, MRB_TT_DATA);
+  mrb_define_class_under(mrb, hydro_kx_cl, "Error", hydro_error_cl);
   mrb_define_const(mrb, hydro_kx_cl, "SESSIONKEYBYTES", mrb_fixnum_value(hydro_kx_SESSIONKEYBYTES));
   mrb_define_const(mrb, hydro_kx_cl, "PUBLICKEYBYTES", mrb_fixnum_value(hydro_kx_PUBLICKEYBYTES));
   mrb_define_const(mrb, hydro_kx_cl, "SECRETKEYBYTES", mrb_fixnum_value(hydro_kx_SECRETKEYBYTES));
@@ -278,6 +422,16 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
   mrb_define_const(mrb, hydro_kx_cl, "RESPONSE1BYTES", mrb_fixnum_value(hydro_kx_RESPONSE1BYTES));
   mrb_define_const(mrb, hydro_kx_cl, "RESPONSE2BYTES", mrb_fixnum_value(hydro_kx_RESPONSE2BYTES));
   mrb_define_const(mrb, hydro_kx_cl, "RESPONSE3BYTES", mrb_fixnum_value(hydro_kx_RESPONSE3BYTES));
+  mrb_define_method(mrb, hydro_kx_cl, "initialize", mrb_hydro_kx_state_new, MRB_ARGS_NONE());
+  mrb_define_method(mrb, hydro_kx_cl, "xx_1", mrb_hydro_kx_xx_1, MRB_ARGS_OPT(1));
+  mrb_define_method(mrb, hydro_kx_cl, "xx_2", mrb_hydro_kx_xx_2, MRB_ARGS_ARG(2, 1));
+  mrb_define_method(mrb, hydro_kx_cl, "xx_3", mrb_hydro_kx_xx_3, MRB_ARGS_ARG(2, 1));
+  mrb_define_method(mrb, hydro_kx_cl, "xx_4", mrb_hydro_kx_xx_4, MRB_ARGS_ARG(1, 1));
+
+  hydro_kx_keypair_cl = mrb_define_class_under(mrb, hydro_kx_cl, "Keypair", mrb->object_class);
+  MRB_SET_INSTANCE_TT(hydro_kx_keypair_cl, MRB_TT_DATA);
+  mrb_define_method(mrb, hydro_kx_keypair_cl, "initialize", mrb_hydro_kx_keygen, MRB_ARGS_NONE());
+
 }
 
 void mrb_mruby_libhydrogen_gem_final(mrb_state* mrb) {}

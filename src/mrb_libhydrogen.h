@@ -1,4 +1,3 @@
-#include <mruby.h>
 #include <errno.h>
 #include "../deps/libhydrogen/hydrogen.c"
 #include <mruby/error.h>
@@ -8,6 +7,8 @@
 #include <mruby/data.h>
 #include <mruby/numeric.h>
 #include <assert.h>
+#include <mruby/hash.h>
+#include <string.h>
 
 #if (__GNUC__ >= 3) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 # define likely(x) __builtin_expect(!!(x), 1)
@@ -42,6 +43,14 @@ mrb_hydro_check_length_between(mrb_state *mrb, size_t obj_size, size_t min, size
   return obj_size;
 }
 
-static const struct mrb_data_type mrb_hydro_hash_type = {
-  "$mrb_i_hydro_hash_type", mrb_free,
+static const struct mrb_data_type mrb_hydro_hash_state = {
+  "$mrb_i_hydro_hash_state", mrb_free
+};
+
+static const struct mrb_data_type mrb_hydro_kx_keypair = {
+  "$mrb_i_hydro_kx_keypair", mrb_free
+};
+
+static const struct mrb_data_type mrb_hydro_kx_state = {
+  "$mrb_i_hydro_kx_state", mrb_free
 };
