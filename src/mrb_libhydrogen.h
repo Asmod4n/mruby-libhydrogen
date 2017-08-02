@@ -7,6 +7,7 @@
 #include <mruby/data.h>
 #include <mruby/numeric.h>
 #include <assert.h>
+#include <mruby/array.h>
 #include <mruby/hash.h>
 #include <string.h>
 
