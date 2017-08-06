@@ -297,10 +297,10 @@ mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
   mrb_value tx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
   mrb_value response3 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE3BYTES);
   mrb_value peer_static_pk = mrb_str_new(mrb, NULL, hydro_kx_PUBLICKEYBYTES);
-  mrb_ary_push(mrb, out, response3);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "rx")), rx);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "tx")), tx);
   mrb_ary_push(mrb, out, keypair);
+  mrb_ary_push(mrb, out, response3);
   mrb_ary_push(mrb, out, peer_static_pk);
 
   int rc = hydro_kx_xx_3(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
@@ -365,7 +365,7 @@ mrb_hydro_kx_keygen(mrb_state *mrb, mrb_value self)
 {
   mrb_value seed = mrb_nil_value();
   mrb_get_args(mrb, "|S!", &seed);
-  if (mrb_test(seed)) {
+  if (mrb_string_p(seed)) {
     mrb_hydro_check_length(mrb, RSTRING_LEN(seed), hydro_kx_SEEDBYTES, "seed");
     hydro_kx_keypair *keypair = (hydro_kx_keypair *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*keypair));
     mrb_data_init(self, keypair, &mrb_hydro_kx_keypair);
