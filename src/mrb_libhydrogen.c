@@ -18,7 +18,7 @@ mrb_randombytes_uniform(mrb_state *mrb, mrb_value randombytes_module)
   mrb_get_args(mrb, "i", &upper_bound);
   mrb_assert_int_fit(mrb_int, upper_bound, uint32_t, UINT32_MAX);
 
-  return mrb_fixnum_value((mrb_int) randombytes_uniform((uint32_t) upper_bound));
+  return mrb_fixnum_value((mrb_int) randombytes_uniform((const uint32_t) upper_bound));
 }
 
 static mrb_value
@@ -44,7 +44,7 @@ mrb_randombytes_buf_deterministic(mrb_state *mrb, mrb_value randombytes_module)
   mrb_hydro_check_length(mrb, RSTRING_LEN(seed), randombytes_SEEDBYTES, "seed");
   mrb_value buf = mrb_str_new(mrb, NULL, len);
 
-  randombytes_buf_deterministic(RSTRING_PTR(buf), len, (uint8_t *) RSTRING_PTR(seed));
+  randombytes_buf_deterministic(RSTRING_PTR(buf), len, (const uint8_t *) RSTRING_PTR(seed));
 
   return buf;
 }
@@ -69,13 +69,12 @@ mrb_hydro_hash_init(mrb_state *mrb, mrb_value self)
   mrb_value key;
   mrb_get_args(mrb, "zS", &ctx, &key);
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_hash_CONTEXTBYTES, "ctx");
-  size_t key_len = mrb_hydro_check_length_between(mrb, RSTRING_LEN(key), hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
+  mrb_hydro_check_length_between(mrb, RSTRING_LEN(key), hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
 
   hydro_hash_state *state = (hydro_hash_state *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*state));
-  mrb_data_init(self, state, &mrb_hydro_hash_state);
-
-  int rc = hydro_hash_init(state, ctx, (uint8_t *) RSTRING_PTR(key), key_len);
+  int rc = hydro_hash_init(state, ctx, (const uint8_t *) RSTRING_PTR(key), RSTRING_LEN(key));
   assert(rc == 0);
+  mrb_data_init(self, state, &mrb_hydro_hash_state);
 
   return self;
 }
@@ -83,11 +82,11 @@ mrb_hydro_hash_init(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_hydro_hash_update(mrb_state *mrb, mrb_value self)
 {
-  char *in;
-  mrb_int in_len;
-  mrb_get_args(mrb, "s", &in, &in_len);
+  mrb_value in;
+  mrb_get_args(mrb, "S", &in);
 
-  int rc = hydro_hash_update((hydro_hash_state *) DATA_PTR(self), (uint8_t *) in, in_len);
+  int rc = hydro_hash_update(DATA_GET_PTR(mrb, self, &mrb_hydro_hash_state, hydro_hash_state),
+    RSTRING_PTR(in), RSTRING_LEN(in));
   assert(rc == 0);
 
   return self;
@@ -101,7 +100,7 @@ mrb_hydro_hash_final(mrb_state *mrb, mrb_value self)
   mrb_hydro_check_length_between(mrb, out_len, hydro_hash_BYTES_MIN, hydro_hash_BYTES_MAX, "out_len");
   mrb_value out = mrb_str_new(mrb, NULL, out_len);
 
-  int rc = hydro_hash_final((hydro_hash_state *) DATA_PTR(self), (uint8_t *) RSTRING_PTR(out), out_len);
+  int rc = hydro_hash_final(DATA_GET_PTR(mrb, self, &mrb_hydro_hash_state, hydro_hash_state), (uint8_t *) RSTRING_PTR(out), out_len);
   assert(rc == 0);
 
   return out;
@@ -110,18 +109,20 @@ mrb_hydro_hash_final(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_hydro_hash_hash(mrb_state *mrb, mrb_value hydro_hash_class)
 {
-  char *in;
-  mrb_int in_len;
+  mrb_value in;
   const char *ctx;
   mrb_value key;
   mrb_int out_len = hydro_hash_BYTES;
-  mrb_get_args(mrb, "szS|i", &in, &in_len, &ctx, &key, &out_len);
+  mrb_get_args(mrb, "SzS|i", &in, &ctx, &key, &out_len);
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_hash_CONTEXTBYTES, "ctx");
-  size_t key_len = mrb_hydro_check_length_between(mrb, RSTRING_LEN(key), hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
+  mrb_hydro_check_length_between(mrb, RSTRING_LEN(key), hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
   mrb_hydro_check_length_between(mrb, out_len, hydro_hash_BYTES_MIN, hydro_hash_BYTES_MAX, "out");
   mrb_value out = mrb_str_new(mrb, NULL, out_len);
 
-  int rc = hydro_hash_hash((uint8_t *) RSTRING_PTR(out), out_len, in, in_len, ctx, (uint8_t *) RSTRING_PTR(key), key_len);
+  int rc = hydro_hash_hash((uint8_t *) RSTRING_PTR(out), out_len,
+    RSTRING_PTR(in), RSTRING_LEN(in),
+    ctx,
+    (const uint8_t *) RSTRING_PTR(key), RSTRING_LEN(key));
   assert(rc == 0);
 
   return out;
@@ -138,22 +139,25 @@ mrb_hydro_secretbox_keygen(mrb_state *mrb, mrb_value hydro_secretbox_class)
 static mrb_value
 mrb_hydro_secretbox_encrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 {
-  char *m;
-  mrb_int mlen;
+  mrb_value m;
   const char *ctx;
   mrb_value key;
   mrb_int msg_id = 0;
-  mrb_get_args(mrb, "szS|i", &m, &mlen, &ctx, &key, &msg_id);
+  mrb_get_args(mrb, "SzS|i", &m, &ctx, &key, &msg_id);
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_secretbox_KEYBYTES, "key");
   mrb_assert_int_fit(mrb_int, msg_id, uint64_t, UINT64_MAX);
   mrb_int ciphertext_len;
-  if(unlikely(mrb_int_add_overflow(mlen, hydro_secretbox_HEADERBYTES, &ciphertext_len))) {
+  if(unlikely(mrb_int_add_overflow(RSTRING_LEN(m), hydro_secretbox_HEADERBYTES, &ciphertext_len))) {
     mrb_raise(mrb, E_RANGE_ERROR, "mlen is too large");
   }
   mrb_value ciphertext = mrb_str_new(mrb, NULL, ciphertext_len);
 
-  int rc = hydro_secretbox_encrypt((uint8_t *) RSTRING_PTR(ciphertext), m, mlen, msg_id, ctx, (uint8_t *) RSTRING_PTR(key));
+  int rc = hydro_secretbox_encrypt((uint8_t *) RSTRING_PTR(ciphertext),
+    RSTRING_PTR(m), RSTRING_LEN(m),
+    msg_id,
+    ctx,
+    (const uint8_t *) RSTRING_PTR(key));
   assert(rc == 0);
 
   return ciphertext;
@@ -162,22 +166,28 @@ mrb_hydro_secretbox_encrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 static mrb_value
 mrb_hydro_secretbox_decrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 {
-  char *c;
-  mrb_int clen;
+  mrb_value c;
   const char *ctx;
   mrb_value key;
   mrb_int msg_id = 0;
-  mrb_get_args(mrb, "szS|i", &c, &clen, &ctx, &key, &msg_id);
-  if (clen < hydro_secretbox_HEADERBYTES) {
+  mrb_get_args(mrb, "SzS|i", &c, &ctx, &key, &msg_id);
+  if (RSTRING_LEN(c) < hydro_secretbox_HEADERBYTES) {
     mrb_raise(mrb, E_RANGE_ERROR, "ciphertext is too short");
   }
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_secretbox_KEYBYTES, "key");
   mrb_assert_int_fit(mrb_int, msg_id, uint64_t, UINT64_MAX);
-  mrb_value m = mrb_str_new(mrb, NULL, clen - hydro_secretbox_HEADERBYTES);
+  mrb_value m = mrb_str_new(mrb, NULL, RSTRING_LEN(c) - hydro_secretbox_HEADERBYTES);
 
-  int rc = hydro_secretbox_decrypt(RSTRING_PTR(m), (uint8_t *) c, clen, msg_id, ctx, (uint8_t *) RSTRING_PTR(key));
-  assert(rc == 0);
+  int rc = hydro_secretbox_decrypt(RSTRING_PTR(m),
+    (const uint8_t *) RSTRING_PTR(c), RSTRING_LEN(c),
+    msg_id,
+    ctx,
+    (const uint8_t *) RSTRING_PTR(key));
+
+  if (rc != 0) {
+    mrb_raise(mrb, E_HYDRO_ERROR, "message forged!");
+  }
 
   return m;
 }
@@ -196,7 +206,7 @@ mrb_hydro_kdf_derive_from_key(mrb_state *mrb, mrb_value hydro_kdf_module)
   mrb_int subkey_id;
   const char *ctx;
   mrb_value key;
-  mrb_int subkey_len = 32;
+  mrb_int subkey_len = hydro_kdf_KEYBYTES;
   mrb_get_args(mrb, "izS|i", &subkey_id, &ctx, &key, &subkey_len);
   mrb_assert_int_fit(mrb_int, subkey_id, uint64_t, UINT64_MAX);
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_kdf_CONTEXTBYTES, "ctx");
@@ -204,7 +214,10 @@ mrb_hydro_kdf_derive_from_key(mrb_state *mrb, mrb_value hydro_kdf_module)
   mrb_hydro_check_length_between(mrb, subkey_len, hydro_kdf_BYTES_MIN, hydro_kdf_BYTES_MAX, "subkey_len");
   mrb_value subkey = mrb_str_new(mrb, NULL, subkey_len);
 
-  int rc = hydro_kdf_derive_from_key((uint8_t *) RSTRING_PTR(subkey), subkey_len, subkey_id, ctx, (uint8_t *) RSTRING_PTR(key));
+  int rc = hydro_kdf_derive_from_key((uint8_t *) RSTRING_PTR(subkey), subkey_len,
+    subkey_id,
+    ctx,
+    (const uint8_t *) RSTRING_PTR(key));
   assert(rc == 0);
 
   return subkey;
@@ -232,7 +245,7 @@ mrb_hydro_kx_xx_1(mrb_state *mrb, mrb_value self)
   mrb_value response1 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE1BYTES);
   int rc = hydro_kx_xx_1(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     (uint8_t *) RSTRING_PTR(response1),
-    (uint8_t *) psk);
+    (const uint8_t *) psk);
   assert(rc == 0);
   return response1;
 }
@@ -240,11 +253,12 @@ mrb_hydro_kx_xx_1(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
 {
-  char *response1, *psk = NULL;
-  mrb_int response1_len, psk_len = 0;
-  hydro_kx_keypair *static_kp;
-  mrb_get_args(mrb, "sd|s!", &response1, &response1_len, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
-  mrb_hydro_check_length(mrb, response1_len, hydro_kx_RESPONSE1BYTES, "response1");
+  mrb_value response1;
+  const hydro_kx_keypair *static_kp;
+  char *psk = NULL;
+  mrb_int psk_len = 0;
+  mrb_get_args(mrb, "Sd|s!", &response1, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(response1), hydro_kx_RESPONSE1BYTES, "response1");
   if (psk) {
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
@@ -252,8 +266,8 @@ mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
   mrb_value response2 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE2BYTES);
   int rc = hydro_kx_xx_2(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     (uint8_t *) RSTRING_PTR(response2),
-    (uint8_t *) response1,
-    (uint8_t *) psk,
+    (const uint8_t *) RSTRING_PTR(response1),
+    (const uint8_t *) psk,
     static_kp);
 
   if (rc != 0) {
@@ -266,11 +280,12 @@ mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
 {
-  char *response2, *psk = NULL;
-  mrb_int response2_len, psk_len = 0;
-  hydro_kx_keypair *static_kp;
-  mrb_get_args(mrb, "sd|s!", &response2, &response2_len, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
-  mrb_hydro_check_length(mrb, response2_len, hydro_kx_RESPONSE2BYTES, "response2");
+  mrb_value response2;
+  const hydro_kx_keypair *static_kp;
+  char *psk = NULL;
+  mrb_int psk_len = 0;
+  mrb_get_args(mrb, "Sd|s!", &response2, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(response2), hydro_kx_RESPONSE2BYTES, "response2");
   if (psk) {
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
@@ -292,8 +307,8 @@ mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
     &kp,
    (uint8_t *) RSTRING_PTR(response3),
    (uint8_t *) RSTRING_PTR(peer_static_pk),
-   (uint8_t *) response2,
-   (uint8_t *) psk,
+   (const uint8_t *) RSTRING_PTR(response2),
+   (const uint8_t *) psk,
    static_kp);
 
   if (rc != 0) {
@@ -309,10 +324,11 @@ mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
 {
-  char *response3, *psk = NULL;
-  mrb_int response3_len, psk_len = 0;
-  mrb_get_args(mrb, "s|s!", &response3, &response3_len, &psk, &psk_len);
-  mrb_hydro_check_length(mrb, response3_len, hydro_kx_RESPONSE3BYTES, "response3");
+  mrb_value response3;
+  char *psk;
+  mrb_int psk_len = 0;
+  mrb_get_args(mrb, "S|s!", &response3, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(response3), hydro_kx_RESPONSE3BYTES, "response3");
   if (psk) {
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
@@ -331,8 +347,8 @@ mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
   int rc = hydro_kx_xx_4(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     &kp,
     (uint8_t *) RSTRING_PTR(peer_static_pk),
-    (uint8_t *) response3,
-    (uint8_t *) psk);
+    (const uint8_t *) RSTRING_PTR(response3),
+    (const uint8_t *) psk);
 
   if (rc != 0) {
     mrb_raise(mrb, E_HYDRO_KX_ERROR, "Key Exchange Error");
@@ -348,11 +364,31 @@ static mrb_value
 mrb_hydro_kx_keygen(mrb_state *mrb, mrb_value self)
 {
   hydro_kx_keypair *keypair = (hydro_kx_keypair *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*keypair));
+
+  mrb_value seed = mrb_nil_value();
+  mrb_get_args(mrb, "|S!", &seed);
+  if (mrb_test(seed)) {
+    mrb_hydro_check_length(mrb, RSTRING_LEN(seed), hydro_kx_SEEDBYTES, "seed");
+    hydro_kx_keygen_deterministic(keypair, (const uint8_t *) RSTRING_PTR(seed));
+  } else {
+    hydro_kx_keygen(keypair);
+  }
+
   mrb_data_init(self, keypair, &mrb_hydro_kx_keypair);
 
-  hydro_kx_keygen(keypair);
-
   return self;
+}
+
+static mrb_value
+mrb_hydro_kx_keypair_pk(mrb_state *mrb, mrb_value self)
+{
+  return mrb_str_new(mrb, (const char *) (DATA_GET_PTR(mrb, self, &mrb_hydro_kx_keypair, hydro_kx_keypair))->pk, hydro_kx_PUBLICKEYBYTES);
+}
+
+static mrb_value
+mrb_hydro_kx_keypair_sk(mrb_state *mrb, mrb_value self)
+{
+  return mrb_str_new(mrb, (const char *) (DATA_GET_PTR(mrb, self, &mrb_hydro_kx_keypair, hydro_kx_keypair))->sk, hydro_kx_SECRETKEYBYTES);
 }
 
 void
@@ -435,6 +471,8 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
   hydro_kx_keypair_cl = mrb_define_class_under(mrb, hydro_kx_cl, "Keypair", mrb->object_class);
   MRB_SET_INSTANCE_TT(hydro_kx_keypair_cl, MRB_TT_DATA);
   mrb_define_method(mrb, hydro_kx_keypair_cl, "initialize", mrb_hydro_kx_keygen, MRB_ARGS_NONE());
+  mrb_define_method(mrb, hydro_kx_keypair_cl, "pk", mrb_hydro_kx_keypair_pk, MRB_ARGS_NONE());
+  mrb_define_method(mrb, hydro_kx_keypair_cl, "sk", mrb_hydro_kx_keypair_sk, MRB_ARGS_NONE());
 
 }
 
