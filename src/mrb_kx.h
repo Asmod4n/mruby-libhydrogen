@@ -99,7 +99,7 @@ static mrb_value
 mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
 {
   mrb_value response3;
-  char *psk;
+  char *psk = NULL;
   mrb_int psk_len = 0;
   mrb_get_args(mrb, "S|s!", &response3, &psk, &psk_len);
   mrb_hydro_check_length(mrb, RSTRING_LEN(response3), hydro_kx_RESPONSE3BYTES, "response3");

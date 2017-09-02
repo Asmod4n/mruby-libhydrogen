@@ -1,5 +1,6 @@
 #include <mruby/hydrogen.h>
 #include "mrb_libhydrogen.h"
+#include "mrb_core.h"
 #include "mrb_hash.h"
 #include "mrb_kdf.h"
 #include "mrb_kx.h"
@@ -10,7 +11,7 @@ void
 mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
 {
   errno = 0;
-  if (hydro_init() != 0) {
+  if (!hydro_random_initialized && hydro_init() != 0) {
       mrb_sys_fail(mrb, "hydro_init");
   }
 
@@ -25,6 +26,8 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
 
   hydro_mod = mrb_define_module(mrb, "Hydro");
   hydro_error_cl = mrb_define_class_under(mrb, hydro_mod, "Error", E_RUNTIME_ERROR);
+  mrb_define_module_function(mrb, hydro_mod, "increment", mrb_hydro_increment, MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, hydro_mod, "bin2hex", mrb_hydro_bin2hex, MRB_ARGS_REQ(1));
 
   hydro_hash_cl = mrb_define_class_under(mrb, hydro_mod, "Hash", mrb->object_class);
   MRB_SET_INSTANCE_TT(hydro_hash_cl, MRB_TT_DATA);
@@ -55,7 +58,7 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
   mrb_define_const(mrb, hydro_kdf_mod, "CONTEXTBYTES", mrb_fixnum_value(hydro_kdf_CONTEXTBYTES));
   mrb_define_const(mrb, hydro_kdf_mod, "KEYBYTES", mrb_fixnum_value(hydro_kdf_KEYBYTES));
   mrb_define_const(mrb, hydro_kdf_mod, "BYTES_MAX", mrb_fixnum_value(hydro_kdf_BYTES_MAX));
-  mrb_define_const(mrb, hydro_kdf_mod, "BYTES_MAX", mrb_fixnum_value(hydro_kdf_BYTES_MIN));
+  mrb_define_const(mrb, hydro_kdf_mod, "BYTES_MIN", mrb_fixnum_value(hydro_kdf_BYTES_MIN));
   mrb_define_module_function(mrb, hydro_kdf_mod, "keygen", mrb_hydro_kdf_keygen, MRB_ARGS_NONE());
   mrb_define_module_function(mrb, hydro_kdf_mod, "derive_from_key", mrb_hydro_kdf_derive_from_key, MRB_ARGS_ARG(3, 1));
 

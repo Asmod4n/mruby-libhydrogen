@@ -3,4 +3,5 @@ MRuby::Gem::Specification.new('mruby-libhydrogen') do |spec|
   spec.author  = 'Hendrik Beskow'
   spec.summary = 'libhydrogen for mruby'
   spec.add_conflict 'mruby-libsodium'
+  spec.add_dependency 'mruby-string-ext'
 end
