@@ -45,3 +45,14 @@ mrb_randombytes_buf_deterministic(mrb_state *mrb, mrb_value randombytes_module)
 
   return buf;
 }
+
+static void
+mrb_randombytes_gem_init(mrb_state *mrb)
+{
+  struct RClass *randombytes_mod = mrb_define_module(mrb, "RandomBytes");
+  mrb_define_const(mrb, randombytes_mod, "SEEDBYTES", mrb_fixnum_value(randombytes_SEEDBYTES));
+  mrb_define_module_function(mrb, randombytes_mod, "random", mrb_randombytes_random, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, randombytes_mod, "uniform", mrb_randombytes_uniform, MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, randombytes_mod, "buf", mrb_randombytes_buf, MRB_ARGS_ARG(1, 1));
+  mrb_define_module_function(mrb, randombytes_mod, "buf_deterministic", mrb_randombytes_buf_deterministic, MRB_ARGS_ARG(2, 1));
+}

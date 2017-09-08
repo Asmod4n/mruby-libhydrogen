@@ -164,3 +164,29 @@ mrb_hydro_kx_keypair_sk(mrb_state *mrb, mrb_value self)
 {
   return mrb_str_new(mrb, (const char *) (DATA_GET_PTR(mrb, self, &mrb_hydro_kx_keypair, hydro_kx_keypair))->sk, hydro_kx_SECRETKEYBYTES);
 }
+
+static void
+mrb_hydro_kx_gem_init(mrb_state *mrb, struct RClass *hydro_mod, struct RClass *hydro_error_cl)
+{
+  struct RClass *hydro_kx_cl = mrb_define_class_under(mrb, hydro_mod, "Kx", mrb->object_class);
+  MRB_SET_INSTANCE_TT(hydro_kx_cl, MRB_TT_DATA);
+  mrb_define_class_under(mrb, hydro_kx_cl, "Error", hydro_error_cl);
+  mrb_define_const(mrb, hydro_kx_cl, "SESSIONKEYBYTES", mrb_fixnum_value(hydro_kx_SESSIONKEYBYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "PUBLICKEYBYTES", mrb_fixnum_value(hydro_kx_PUBLICKEYBYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "SECRETKEYBYTES", mrb_fixnum_value(hydro_kx_SECRETKEYBYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "PSKBYTES", mrb_fixnum_value(hydro_kx_PSKBYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "RESPONSE1BYTES", mrb_fixnum_value(hydro_kx_RESPONSE1BYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "RESPONSE2BYTES", mrb_fixnum_value(hydro_kx_RESPONSE2BYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "RESPONSE3BYTES", mrb_fixnum_value(hydro_kx_RESPONSE3BYTES));
+  mrb_define_method(mrb, hydro_kx_cl, "initialize", mrb_hydro_kx_state_new, MRB_ARGS_NONE());
+  mrb_define_method(mrb, hydro_kx_cl, "xx_1", mrb_hydro_kx_xx_1, MRB_ARGS_OPT(1));
+  mrb_define_method(mrb, hydro_kx_cl, "xx_2", mrb_hydro_kx_xx_2, MRB_ARGS_ARG(2, 1));
+  mrb_define_method(mrb, hydro_kx_cl, "xx_3", mrb_hydro_kx_xx_3, MRB_ARGS_ARG(2, 1));
+  mrb_define_method(mrb, hydro_kx_cl, "xx_4", mrb_hydro_kx_xx_4, MRB_ARGS_ARG(1, 1));
+
+  struct RClass *hydro_kx_keypair_cl = mrb_define_class_under(mrb, hydro_kx_cl, "Keypair", mrb->object_class);
+  MRB_SET_INSTANCE_TT(hydro_kx_keypair_cl, MRB_TT_DATA);
+  mrb_define_method(mrb, hydro_kx_keypair_cl, "initialize", mrb_hydro_kx_keygen, MRB_ARGS_OPT(1));
+  mrb_define_method(mrb, hydro_kx_keypair_cl, "pk", mrb_hydro_kx_keypair_pk, MRB_ARGS_NONE());
+  mrb_define_method(mrb, hydro_kx_keypair_cl, "sk", mrb_hydro_kx_keypair_sk, MRB_ARGS_NONE());
+}

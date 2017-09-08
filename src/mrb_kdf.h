@@ -28,3 +28,15 @@ mrb_hydro_kdf_derive_from_key(mrb_state *mrb, mrb_value hydro_kdf_module)
 
   return subkey;
 }
+
+static void
+mrb_hydro_kdf_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
+{
+  struct RClass *hydro_kdf_mod = mrb_define_class_under(mrb, hydro_mod, "Kdf", mrb->object_class);
+  mrb_define_const(mrb, hydro_kdf_mod, "CONTEXTBYTES", mrb_fixnum_value(hydro_kdf_CONTEXTBYTES));
+  mrb_define_const(mrb, hydro_kdf_mod, "KEYBYTES", mrb_fixnum_value(hydro_kdf_KEYBYTES));
+  mrb_define_const(mrb, hydro_kdf_mod, "BYTES_MAX", mrb_fixnum_value(hydro_kdf_BYTES_MAX));
+  mrb_define_const(mrb, hydro_kdf_mod, "BYTES_MIN", mrb_fixnum_value(hydro_kdf_BYTES_MIN));
+  mrb_define_module_function(mrb, hydro_kdf_mod, "keygen", mrb_hydro_kdf_keygen, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, hydro_kdf_mod, "derive_from_key", mrb_hydro_kdf_derive_from_key, MRB_ARGS_ARG(3, 1));
+}

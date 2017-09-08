@@ -5,8 +5,8 @@
 
 MRB_BEGIN_DECL
 
-#if (MRB_INT_BIT < 32)
-#error "MRB_INT16 is to small for mruby-libhydrogen"
+#if ((MRB_INT_BIT < 32)||defined(MRB_INT16))
+#error "MRB_INT16 is too small for mruby-libhydrogen"
 #endif
 
 #define E_HYDRO_ERROR (mrb_class_get_under(mrb, mrb_module_get(mrb, "Hydro"), "Error"))

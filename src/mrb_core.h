@@ -29,3 +29,10 @@ mrb_hydro_bin2hex(mrb_state *mrb, mrb_value hydro_mod)
 
   return hex;
 }
+
+static void
+mrb_hydro_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
+{
+  mrb_define_module_function(mrb, hydro_mod, "increment", mrb_hydro_increment, MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, hydro_mod, "bin2hex", mrb_hydro_bin2hex, MRB_ARGS_REQ(1));
+}

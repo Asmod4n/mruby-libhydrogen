@@ -76,3 +76,23 @@ mrb_hydro_hash_hash(mrb_state *mrb, mrb_value hydro_hash_class)
 
   return out;
 }
+
+static void
+mrb_hydro_hash_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
+{
+  struct RClass *hydro_hash_cl = mrb_define_class_under(mrb, hydro_mod, "Hash", mrb->object_class);
+  MRB_SET_INSTANCE_TT(hydro_hash_cl, MRB_TT_DATA);
+  mrb_define_const(mrb, hydro_hash_cl, "BYTES", mrb_fixnum_value(hydro_hash_BYTES));
+  mrb_define_const(mrb, hydro_hash_cl, "BYTES_MAX", mrb_fixnum_value(hydro_hash_BYTES_MAX));
+  mrb_define_const(mrb, hydro_hash_cl, "BYTES_MIN", mrb_fixnum_value(hydro_hash_BYTES_MIN));
+  mrb_define_const(mrb, hydro_hash_cl, "CONTEXTBYTES", mrb_fixnum_value(hydro_hash_CONTEXTBYTES));
+  mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES", mrb_fixnum_value(hydro_hash_KEYBYTES));
+  mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES_MAX", mrb_fixnum_value(hydro_hash_KEYBYTES_MAX));
+  mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES_MIN", mrb_fixnum_value(hydro_hash_KEYBYTES_MIN));
+  mrb_define_class_method(mrb, hydro_hash_cl, "keygen", mrb_hydro_hash_keygen, MRB_ARGS_OPT(1));
+  mrb_define_method(mrb, hydro_hash_cl, "initialize", mrb_hydro_hash_init, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, hydro_hash_cl, "update", mrb_hydro_hash_update, MRB_ARGS_REQ(1));
+  mrb_define_alias(mrb, hydro_hash_cl, "<<", "update");
+  mrb_define_method(mrb, hydro_hash_cl, "final", mrb_hydro_hash_final, MRB_ARGS_REQ(1));
+  mrb_define_class_method(mrb, hydro_hash_cl, "hash", mrb_hydro_hash_hash, MRB_ARGS_ARG(3, 1));
+}
