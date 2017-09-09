@@ -90,7 +90,7 @@ mrb_hydro_secretbox_probe_verify(mrb_state *mrb, mrb_value hydro_secretbox_modul
   mrb_value probe, c;
   const char *ctx;
   mrb_value key;
-  mrb_get_args(mrb, "SzS", &probe, &ctx, &key);
+  mrb_get_args(mrb, "SSzS", &probe, &c, &ctx, &key);
   mrb_hydro_check_length(mrb, RSTRING_LEN(probe), hydro_secretbox_PROBEBYTES, "probe");
   if (RSTRING_LEN(c) < hydro_secretbox_HEADERBYTES) {
     mrb_raise(mrb, E_RANGE_ERROR, "ciphertext is too short");
@@ -118,5 +118,5 @@ mrb_hydro_secretbox_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
   mrb_define_module_function(mrb, hydro_secretbox_mod, "encrypt", mrb_hydro_secretbox_encrypt, MRB_ARGS_ARG(3, 1));
   mrb_define_module_function(mrb, hydro_secretbox_mod, "decrypt", mrb_hydro_secretbox_decrypt, MRB_ARGS_ARG(3, 1));
   mrb_define_module_function(mrb, hydro_secretbox_mod, "probe_create", mrb_hydro_secretbox_probe_create, MRB_ARGS_REQ(3));
-  mrb_define_module_function(mrb, hydro_secretbox_mod, "probe_verify", mrb_hydro_secretbox_probe_verify, MRB_ARGS_REQ(3));
+  mrb_define_module_function(mrb, hydro_secretbox_mod, "probe_verify", mrb_hydro_secretbox_probe_verify, MRB_ARGS_REQ(4));
 }
