@@ -39,10 +39,10 @@ assert("Hydro::Hash") do
   h = hydro_hash.final(100)
   hex = Hydro.bin2hex(h)
   assert_equal("19441568ff5a5c2ffc16d526854366e301ad80e603bfc0efb54df23e65df8f7fc558a36f56f0cb84fcf126f90c76543215be076e4ecb7996af93f15a22c77eb019ec3fadae52fa6d079cbc9700418f08d640a25f9178915e12de7bae68f0b0df2796d235", hex)
-  h = Hydro::Hash.hash(msg, ctx, key, 100)
+  h = Hydro::Hash.hash(100, msg, ctx, key)
   hex = Hydro.bin2hex(h)
   assert_equal("8cb8e83d64dd81394494a0e0c96a03cf5ced3b6406336697625c9b236e92b4eae056721035dd88c6f9b74c91184fe9b6ce85e56e2fbc9f11face6c5d86f879ba725a7c3ce790f71865ed814db6da7a47f7b7af76824f0299ef942367ad96429f706e1544", hex)
-  h = Hydro::Hash.hash(msg, ctx, key)
+  h = Hydro::Hash.hash(Hydro::Hash::BYTES, msg, ctx, key)
   hex = Hydro.bin2hex(h)
   assert_equal("ba2c074391fc996f49d0012a4b06300114205f217ca5549ec3256bff2ffc0d32", hex)
 end
@@ -50,10 +50,10 @@ end
 assert("Hydro::Kdf") do
   dk = "\0" * RandomBytes::SEEDBYTES
   key = RandomBytes.buf_deterministic(Hydro::Kdf::KEYBYTES, dk)
-  subkey1 = Hydro::Kdf.derive_from_key(1, ctx, key, 16)
-  subkey2 = Hydro::Kdf.derive_from_key(2, ctx, key, 16)
-  subkey3 = Hydro::Kdf.derive_from_key(0, ctx, key, 32)
-  subkey4 = Hydro::Kdf.derive_from_key(0, ctx, key, 50)
+  subkey1 = Hydro::Kdf.derive_from_key(16, 1, ctx, key)
+  subkey2 = Hydro::Kdf.derive_from_key(16, 2, ctx, key)
+  subkey3 = Hydro::Kdf.derive_from_key(32, 0, ctx, key)
+  subkey4 = Hydro::Kdf.derive_from_key(50, 0, ctx, key)
   subkey1_hex = Hydro.bin2hex(subkey1)
   subkey2_hex = Hydro.bin2hex(subkey2)
   subkey3_hex = Hydro.bin2hex(subkey3)
