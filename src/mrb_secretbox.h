@@ -56,7 +56,7 @@ mrb_hydro_secretbox_decrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
     (const uint8_t *) RSTRING_PTR(key));
 
   if (rc != 0) {
-    mrb_raise(mrb, E_HYDRO_ERROR, "message forged!");
+    mrb_raise(mrb, E_HYDRO_SECRETBOX_ERROR, "message forged!");
   }
 
   return m;
@@ -107,9 +107,10 @@ mrb_hydro_secretbox_probe_verify(mrb_state *mrb, mrb_value hydro_secretbox_modul
 }
 
 static void
-mrb_hydro_secretbox_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
+mrb_hydro_secretbox_gem_init(mrb_state *mrb, struct RClass *hydro_mod, struct RClass *hydro_error_cl)
 {
   struct RClass *hydro_secretbox_mod = mrb_define_module_under(mrb, hydro_mod, "SecretBox");
+  mrb_define_class_under(mrb, hydro_secretbox_mod, "Error", hydro_error_cl);
   mrb_define_const(mrb, hydro_secretbox_mod, "CONTEXTBYTES", mrb_fixnum_value(hydro_secretbox_CONTEXTBYTES));
   mrb_define_const(mrb, hydro_secretbox_mod, "HEADERBYTES", mrb_fixnum_value(hydro_secretbox_HEADERBYTES));
   mrb_define_const(mrb, hydro_secretbox_mod, "KEYBYTES", mrb_fixnum_value(hydro_secretbox_KEYBYTES));

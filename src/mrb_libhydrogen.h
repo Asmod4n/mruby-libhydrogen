@@ -53,3 +53,7 @@ static const struct mrb_data_type mrb_hydro_kx_keypair = {
 static const struct mrb_data_type mrb_hydro_kx_state = {
   "$mrb_i_hydro_kx_state", mrb_free
 };
+
+static const struct mrb_data_type mrb_hydro_sign_state = {
+  "$mrb_i_hydro_sign_state", mrb_free
+};
