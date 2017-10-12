@@ -119,5 +119,5 @@ mrb_hydro_secretbox_gem_init(mrb_state *mrb, struct RClass *hydro_mod, struct RC
   mrb_define_module_function(mrb, hydro_secretbox_mod, "encrypt", mrb_hydro_secretbox_encrypt, MRB_ARGS_ARG(3, 1));
   mrb_define_module_function(mrb, hydro_secretbox_mod, "decrypt", mrb_hydro_secretbox_decrypt, MRB_ARGS_ARG(3, 1));
   mrb_define_module_function(mrb, hydro_secretbox_mod, "probe_create", mrb_hydro_secretbox_probe_create, MRB_ARGS_REQ(3));
-  mrb_define_module_function(mrb, hydro_secretbox_mod, "probe_verify", mrb_hydro_secretbox_probe_verify, MRB_ARGS_REQ(4));
+  mrb_define_module_function(mrb, hydro_secretbox_mod, "probe_verify?", mrb_hydro_secretbox_probe_verify, MRB_ARGS_REQ(4));
 }

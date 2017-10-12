@@ -71,7 +71,7 @@ mrb_hydro_sign_gem_init(mrb_state *mrb, struct RClass *hydro_mod, struct RClass 
   mrb_define_const(mrb, hydro_sign_cl, "PUBLICKEYBYTES", mrb_fixnum_value(hydro_sign_PUBLICKEYBYTES));
   mrb_define_const(mrb, hydro_sign_cl, "SECRETKEYBYTES", mrb_fixnum_value(hydro_sign_SECRETKEYBYTES));
   mrb_define_const(mrb, hydro_sign_cl, "SEEDBYTES", mrb_fixnum_value(hydro_sign_SEEDBYTES));
-  mrb_define_class_method(mrb, hydro_sign_cl, "keygen", mrb_hydro_sign_keygen, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, hydro_sign_cl, "keygen", mrb_hydro_sign_keygen, MRB_ARGS_OPT(1));
   mrb_define_class_method(mrb, hydro_sign_cl, "create", mrb_hydro_sign_create, MRB_ARGS_REQ(3));
-  mrb_define_class_method(mrb, hydro_sign_cl, "verify", mrb_hydro_sign_verify, MRB_ARGS_REQ(4));
+  mrb_define_class_method(mrb, hydro_sign_cl, "verify?", mrb_hydro_sign_verify, MRB_ARGS_REQ(4));
 }
