@@ -27,7 +27,7 @@ end
 
 assert("Hydro::Hash") do
   dk = "\0" * RandomBytes::SEEDBYTES
-  key =  RandomBytes.buf_deterministic(Hydro::Hash::KEYBYTES_MAX, dk)
+  key =  RandomBytes.buf_deterministic(Hydro::Hash::KEYBYTES, dk)
   dk = Hydro.increment(dk)
   hydro_hash = Hydro::Hash.new(ctx, key)
   msg = nil
@@ -38,13 +38,13 @@ assert("Hydro::Hash") do
   end
   h = hydro_hash.final(100)
   hex = Hydro.bin2hex(h)
-  assert_equal("724ad200fb004eac02a229af7b3f61153d4ffed316f663e6092e6d2747a61be7803889b4caeed92959045233d937a5cc4cf20c8fd2cc13271e2ffd1f90e963b11a8d96d9c1fa7aabfc481db29f855f61234e1f6d010c34ed2a8ee5faf73c17062146c304", hex)
+  assert_equal("e5d2beb77a039965850ee76327e06b2fa6cb5121db8038b11bce4641a9c4bd843658104bdf07342570bb5fd1d72c0d31a8981b47c718fddaffbd4171605c873cbaf921bb57988dd814f3a3fbef9799ff7c762705c4bf37ab29815981bf0d8833d60afe14", hex)
   h = Hydro::Hash.hash(100, msg, ctx, key)
   hex = Hydro.bin2hex(h)
-  assert_equal("5cea1d0440f8e0fed6889205cd6b1dc92fe294d12e8266101c3516a846b3e3c18c13a5c67a177facb4033c7a38b3c3784e02ffd0bfbd7f745e60f50e5df888463259f09e65f7496b3ce069238a0ed95ddedc4b795e171c140d4d92cf16231b26f05419fb", hex)
+  assert_equal("724bd8883df73320ffd70923cb997f9a99bc670c4d78887be4975add0099fbf489b266a85d1f56743062d60a05590cbce47e45108367879bf4641cbaefe584e8618cbeb8c230ae956da22c7c5c4f11a8804ca576ec20fa5da239dde3d03a6018383c21f5", hex)
   h = Hydro::Hash.hash(Hydro::Hash::BYTES, msg, ctx, key)
   hex = Hydro.bin2hex(h)
-  assert_equal("8ff82f5bd3a37aa81695a0d977795b6b20c7ce71a3886e0b33af6ac7f261c26d", hex)
+  assert_equal("7dfa45ce18210e2422fd658bf7beccb6e534e44f99ae359f4af3ba41af8ca463", hex)
 end
 
 assert("Hydro::Kdf") do
@@ -58,10 +58,10 @@ assert("Hydro::Kdf") do
   subkey2_hex = Hydro.bin2hex(subkey2)
   subkey3_hex = Hydro.bin2hex(subkey3)
   subkey4_hex = Hydro.bin2hex(subkey4)
-  assert_equal("53ae26f46924e9f0d9b9da098611d7f9", subkey1_hex)
-  assert_equal("b8eb0a9117ea787afdee393e53a82911", subkey2_hex)
-  assert_equal("5c732520d71c97bbf253f0c065e8f2aa2af15902cf2ce3973fbba51efc00a182", subkey3_hex)
-  assert_equal("74a98824faf4137dfe52678b6e1f865eafa331f322422373f369d3796017b37be69b8813e13810014ad18aa34e4eae9a001d", subkey4_hex)
+  assert_equal("af8019d3516d4ba6c80a7ea5a87e4d77", subkey1_hex)
+  assert_equal("af8c4cba4e1f36c293631cc7001717dd", subkey2_hex)
+  assert_equal("ff9345489dea1e4fe59194cea8794c9b0af9380c2d18c3ab38eeef2af95c1e26", subkey3_hex)
+  assert_equal("a8dd79ca19d604d1487b82d76b8d4ad4138a29dfaeeb207b99b2e5904e7855555bb94a76070fa71871df6ed911661d99efec", subkey4_hex)
 end
 
 assert("Hydro::Kx") do

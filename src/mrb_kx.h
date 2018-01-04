@@ -16,31 +16,31 @@ mrb_hydro_kx_xx_1(mrb_state *mrb, mrb_value self)
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
 
-  mrb_value response1 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE1BYTES);
+  mrb_value packet1 = mrb_str_new(mrb, NULL, hydro_kx_XX_PACKET1BYTES);
   int rc = hydro_kx_xx_1(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
-    (uint8_t *) RSTRING_PTR(response1),
+    (uint8_t *) RSTRING_PTR(packet1),
     (const uint8_t *) psk);
   assert(rc == 0);
-  return response1;
+  return packet1;
 }
 
 static mrb_value
 mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
 {
-  mrb_value response1;
+  mrb_value packet1;
   const hydro_kx_keypair *static_kp;
   char *psk = NULL;
   mrb_int psk_len = 0;
-  mrb_get_args(mrb, "Sd|s!", &response1, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
-  mrb_hydro_check_length(mrb, RSTRING_LEN(response1), hydro_kx_RESPONSE1BYTES, "response1");
+  mrb_get_args(mrb, "Sd|s!", &packet1, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(packet1), hydro_kx_XX_PACKET1BYTES, "packet1");
   if (psk) {
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
 
-  mrb_value response2 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE2BYTES);
+  mrb_value packet2 = mrb_str_new(mrb, NULL, hydro_kx_XX_PACKET2BYTES);
   int rc = hydro_kx_xx_2(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
-    (uint8_t *) RSTRING_PTR(response2),
-    (const uint8_t *) RSTRING_PTR(response1),
+    (uint8_t *) RSTRING_PTR(packet2),
+    (const uint8_t *) RSTRING_PTR(packet1),
     (const uint8_t *) psk,
     static_kp);
 
@@ -48,18 +48,18 @@ mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
     mrb_raise(mrb, E_HYDRO_KX_ERROR, "Key Exchange Error");
   }
 
-  return response2;
+  return packet2;
 }
 
 static mrb_value
 mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
 {
-  mrb_value response2;
+  mrb_value packet2;
   const hydro_kx_keypair *static_kp;
   char *psk = NULL;
   mrb_int psk_len = 0;
-  mrb_get_args(mrb, "Sd|s!", &response2, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
-  mrb_hydro_check_length(mrb, RSTRING_LEN(response2), hydro_kx_RESPONSE2BYTES, "response2");
+  mrb_get_args(mrb, "Sd|s!", &packet2, &static_kp, &mrb_hydro_kx_keypair, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(packet2), hydro_kx_XX_PACKET2BYTES, "packet2");
   if (psk) {
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
@@ -69,19 +69,19 @@ mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
   mrb_value keypair = mrb_hash_new_capa(mrb, 2);
   mrb_value rx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
   mrb_value tx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
-  mrb_value response3 = mrb_str_new(mrb, NULL, hydro_kx_RESPONSE3BYTES);
+  mrb_value packet3 = mrb_str_new(mrb, NULL, hydro_kx_XX_PACKET3BYTES);
   mrb_value peer_static_pk = mrb_str_new(mrb, NULL, hydro_kx_PUBLICKEYBYTES);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "rx")), rx);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "tx")), tx);
   mrb_ary_push(mrb, out, keypair);
-  mrb_ary_push(mrb, out, response3);
+  mrb_ary_push(mrb, out, packet3);
   mrb_ary_push(mrb, out, peer_static_pk);
 
   int rc = hydro_kx_xx_3(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     &kp,
-   (uint8_t *) RSTRING_PTR(response3),
+   (uint8_t *) RSTRING_PTR(packet3),
    (uint8_t *) RSTRING_PTR(peer_static_pk),
-   (const uint8_t *) RSTRING_PTR(response2),
+   (const uint8_t *) RSTRING_PTR(packet2),
    (const uint8_t *) psk,
    static_kp);
 
@@ -98,11 +98,11 @@ mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
 {
-  mrb_value response3;
+  mrb_value packet3;
   char *psk = NULL;
   mrb_int psk_len = 0;
-  mrb_get_args(mrb, "S|s!", &response3, &psk, &psk_len);
-  mrb_hydro_check_length(mrb, RSTRING_LEN(response3), hydro_kx_RESPONSE3BYTES, "response3");
+  mrb_get_args(mrb, "S|s!", &packet3, &psk, &psk_len);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(packet3), hydro_kx_XX_PACKET3BYTES, "packet3");
   if (psk) {
     mrb_hydro_check_length(mrb, psk_len, hydro_kx_PSKBYTES, "psk");
   }
@@ -121,7 +121,7 @@ mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
   int rc = hydro_kx_xx_4(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     &kp,
     (uint8_t *) RSTRING_PTR(peer_static_pk),
-    (const uint8_t *) RSTRING_PTR(response3),
+    (const uint8_t *) RSTRING_PTR(packet3),
     (const uint8_t *) psk);
 
   if (rc != 0) {
@@ -175,9 +175,9 @@ mrb_hydro_kx_gem_init(mrb_state *mrb, struct RClass *hydro_mod, struct RClass *h
   mrb_define_const(mrb, hydro_kx_cl, "PUBLICKEYBYTES", mrb_fixnum_value(hydro_kx_PUBLICKEYBYTES));
   mrb_define_const(mrb, hydro_kx_cl, "SECRETKEYBYTES", mrb_fixnum_value(hydro_kx_SECRETKEYBYTES));
   mrb_define_const(mrb, hydro_kx_cl, "PSKBYTES", mrb_fixnum_value(hydro_kx_PSKBYTES));
-  mrb_define_const(mrb, hydro_kx_cl, "RESPONSE1BYTES", mrb_fixnum_value(hydro_kx_RESPONSE1BYTES));
-  mrb_define_const(mrb, hydro_kx_cl, "RESPONSE2BYTES", mrb_fixnum_value(hydro_kx_RESPONSE2BYTES));
-  mrb_define_const(mrb, hydro_kx_cl, "RESPONSE3BYTES", mrb_fixnum_value(hydro_kx_RESPONSE3BYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "PACKET1BYTES", mrb_fixnum_value(hydro_kx_XX_PACKET1BYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "PACKET2BYTES", mrb_fixnum_value(hydro_kx_XX_PACKET2BYTES));
+  mrb_define_const(mrb, hydro_kx_cl, "PACKET3BYTES", mrb_fixnum_value(hydro_kx_XX_PACKET3BYTES));
   mrb_define_method(mrb, hydro_kx_cl, "initialize", mrb_hydro_kx_state_new, MRB_ARGS_NONE());
   mrb_define_method(mrb, hydro_kx_cl, "xx_1", mrb_hydro_kx_xx_1, MRB_ARGS_OPT(1));
   mrb_define_method(mrb, hydro_kx_cl, "xx_2", mrb_hydro_kx_xx_2, MRB_ARGS_ARG(2, 1));

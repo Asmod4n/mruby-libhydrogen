@@ -3,10 +3,10 @@ mrb_hydro_hash_keygen(mrb_state *mrb, mrb_value hydro_hash_class)
 {
   mrb_int key_len;
   mrb_get_args(mrb, "i", &key_len);
-  mrb_hydro_check_length_between(mrb, key_len, hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key_len");
+  mrb_hydro_check_length(mrb, key_len, hydro_hash_KEYBYTES, "key_len");
   mrb_value key = mrb_str_new(mrb, NULL, key_len);
 
-  hydro_hash_keygen((uint8_t *) RSTRING_PTR(key), key_len);
+  hydro_hash_keygen((uint8_t *) RSTRING_PTR(key));
 
   return key;
 }
@@ -20,12 +20,12 @@ mrb_hydro_hash_init(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "z|s!", &ctx, &key, &key_len);
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_hash_CONTEXTBYTES, "ctx");
   if (key) {
-    mrb_hydro_check_length_between(mrb, key_len, hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
+    mrb_hydro_check_length(mrb, key_len, hydro_hash_KEYBYTES, "key");
   }
 
   hydro_hash_state *state = (hydro_hash_state *) mrb_realloc(mrb, DATA_PTR(self), sizeof(*state));
   mrb_data_init(self, state, &mrb_hydro_hash_state);
-  int rc = hydro_hash_init(state, ctx, (const uint8_t *) key, key_len);
+  int rc = hydro_hash_init(state, ctx, (const uint8_t *) key);
   assert(rc == 0);
 
   return self;
@@ -70,14 +70,14 @@ mrb_hydro_hash_hash(mrb_state *mrb, mrb_value hydro_hash_class)
   mrb_hydro_check_length_between(mrb, out_len, hydro_hash_BYTES_MIN, hydro_hash_BYTES_MAX, "out");
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_hash_CONTEXTBYTES, "ctx");
   if (key) {
-    mrb_hydro_check_length_between(mrb, key_len, hydro_hash_KEYBYTES_MIN, hydro_hash_KEYBYTES_MAX, "key");
+    mrb_hydro_check_length(mrb, key_len, hydro_hash_KEYBYTES, "key");
   }
   mrb_value out = mrb_str_new(mrb, NULL, out_len);
 
   int rc = hydro_hash_hash((uint8_t *) RSTRING_PTR(out), out_len,
     RSTRING_PTR(in), RSTRING_LEN(in),
     ctx,
-    (const uint8_t *) key, key_len);
+    (const uint8_t *) key);
   assert(rc == 0);
 
   return out;
@@ -93,8 +93,6 @@ mrb_hydro_hash_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
   mrb_define_const(mrb, hydro_hash_cl, "BYTES_MIN", mrb_fixnum_value(hydro_hash_BYTES_MIN));
   mrb_define_const(mrb, hydro_hash_cl, "CONTEXTBYTES", mrb_fixnum_value(hydro_hash_CONTEXTBYTES));
   mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES", mrb_fixnum_value(hydro_hash_KEYBYTES));
-  mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES_MAX", mrb_fixnum_value(hydro_hash_KEYBYTES_MAX));
-  mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES_MIN", mrb_fixnum_value(hydro_hash_KEYBYTES_MIN));
   mrb_define_class_method(mrb, hydro_hash_cl, "keygen", mrb_hydro_hash_keygen, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, hydro_hash_cl, "initialize", mrb_hydro_hash_init, MRB_ARGS_ARG(1, 1));
   mrb_define_method(mrb, hydro_hash_cl, "update", mrb_hydro_hash_update, MRB_ARGS_REQ(1));
