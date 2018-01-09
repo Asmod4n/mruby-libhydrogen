@@ -47,9 +47,9 @@ mrb_hydro_random_buf_deterministic(mrb_state *mrb, mrb_value hydro_random_module
 }
 
 static void
-mrb_hydro_random_gem_init(mrb_state *mrb)
+mrb_hydro_random_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
 {
-  struct RClass *hydro_random_mod = mrb_define_module(mrb, "RandomBytes");
+  struct RClass *hydro_random_mod = mrb_define_module_under(mrb, hydro_mod, "Random");
   mrb_define_const(mrb, hydro_random_mod, "SEEDBYTES", mrb_fixnum_value(hydro_random_SEEDBYTES));
   mrb_define_module_function(mrb, hydro_random_mod, "random", mrb_hydro_random_u32, MRB_ARGS_NONE());
   mrb_define_module_function(mrb, hydro_random_mod, "uniform", mrb_hydro_random_uniform, MRB_ARGS_REQ(1));

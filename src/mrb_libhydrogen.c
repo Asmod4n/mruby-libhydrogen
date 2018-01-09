@@ -20,13 +20,13 @@ mrb_mruby_libhydrogen_gem_init(mrb_state* mrb)
   hydro_mod = mrb_define_module(mrb, "Hydro");
   hydro_error_cl = mrb_define_class_under(mrb, hydro_mod, "Error", E_RUNTIME_ERROR);
 
-  mrb_hydro_random_gem_init(mrb);
+  mrb_hydro_random_gem_init(mrb, hydro_mod);
   mrb_hydro_gem_init(mrb, hydro_mod);
   mrb_hydro_secretbox_gem_init(mrb, hydro_mod, hydro_error_cl);
   mrb_hydro_hash_gem_init(mrb, hydro_mod);
   mrb_hydro_kdf_gem_init(mrb, hydro_mod);
   mrb_hydro_kx_gem_init(mrb, hydro_mod, hydro_error_cl);
-  mrb_hydro_sign_gem_init(mrb, hydro_mod, hydro_error_cl);
+  mrb_hydro_sign_gem_init(mrb, hydro_mod);
 }
 
 void mrb_mruby_libhydrogen_gem_final(mrb_state* mrb) {}

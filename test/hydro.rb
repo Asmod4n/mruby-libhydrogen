@@ -1,16 +1,16 @@
 ctx = "libtests"
 
-assert("RandomBytes") do
+assert("Hydro::Random") do
   b = 0
-  tmp = RandomBytes.buf(10000)
+  tmp = Hydro::Random.buf(10000)
   tmp.bytesize.times do |i|
     b += ((tmp[i].ord) >> 0) & 1
   end
   assert_true(b > 4500 && b < 5500)
 
-  dk = tmp[0...RandomBytes::SEEDBYTES]
+  dk = tmp[0...Hydro::Random::SEEDBYTES]
   b = 0
-  tmp = RandomBytes.buf_deterministic(10000, dk)
+  tmp = Hydro::Random.buf_deterministic(10000, dk)
   tmp.bytesize.times do |i|
     b += ((tmp[i].ord) >> 0) & 1
   end
@@ -18,7 +18,7 @@ assert("RandomBytes") do
 
   bp = b
   b = 0
-  tmp = RandomBytes.buf_deterministic(10000, dk)
+  tmp = Hydro::Random.buf_deterministic(10000, dk)
   tmp.bytesize.times do |i|
     b += ((tmp[i].ord) >> 0) & 1
   end
@@ -26,13 +26,13 @@ assert("RandomBytes") do
 end
 
 assert("Hydro::Hash") do
-  dk = "\0" * RandomBytes::SEEDBYTES
-  key =  RandomBytes.buf_deterministic(Hydro::Hash::KEYBYTES, dk)
+  dk = "\0" * Hydro::Random::SEEDBYTES
+  key =  Hydro::Random.buf_deterministic(Hydro::Hash::KEYBYTES, dk)
   dk = Hydro.increment(dk)
   hydro_hash = Hydro::Hash.new(ctx, key)
   msg = nil
   1001.times do |i|
-    msg = RandomBytes.buf_deterministic(i, dk)
+    msg = Hydro::Random.buf_deterministic(i, dk)
     dk = Hydro.increment(dk)
     hydro_hash.update(msg)
   end
@@ -48,8 +48,8 @@ assert("Hydro::Hash") do
 end
 
 assert("Hydro::Kdf") do
-  dk = "\0" * RandomBytes::SEEDBYTES
-  key = RandomBytes.buf_deterministic(Hydro::Kdf::KEYBYTES, dk)
+  dk = "\0" * Hydro::Random::SEEDBYTES
+  key = Hydro::Random.buf_deterministic(Hydro::Kdf::KEYBYTES, dk)
   subkey1 = Hydro::Kdf.derive_from_key(16, 1, ctx, key)
   subkey2 = Hydro::Kdf.derive_from_key(16, 2, ctx, key)
   subkey3 = Hydro::Kdf.derive_from_key(32, 0, ctx, key)
@@ -78,7 +78,7 @@ assert("Hydro::Kx") do
   assert_equal(kp_client[:tx], kp_server[:rx])
   assert_equal(kp_client[:rx], kp_server[:tx])
 
-  psk = RandomBytes.buf(Hydro::Kx::PSKBYTES)
+  psk = Hydro::Random.buf(Hydro::Kx::PSKBYTES)
   response1 = st_client.xx_1(psk)
   response2 = st_server.xx_2(response1, server_static_kp, psk)
   kp_client, response3, client_peer_pk = st_client.xx_3(response2, client_static_kp, psk)

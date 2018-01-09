@@ -1,10 +1,7 @@
 static mrb_value
 mrb_hydro_hash_keygen(mrb_state *mrb, mrb_value hydro_hash_class)
 {
-  mrb_int key_len;
-  mrb_get_args(mrb, "i", &key_len);
-  mrb_hydro_check_length(mrb, key_len, hydro_hash_KEYBYTES, "key_len");
-  mrb_value key = mrb_str_new(mrb, NULL, key_len);
+  mrb_value key = mrb_str_new(mrb, NULL, hydro_hash_KEYBYTES);
 
   hydro_hash_keygen((uint8_t *) RSTRING_PTR(key));
 
@@ -93,7 +90,7 @@ mrb_hydro_hash_gem_init(mrb_state *mrb, struct RClass *hydro_mod)
   mrb_define_const(mrb, hydro_hash_cl, "BYTES_MIN", mrb_fixnum_value(hydro_hash_BYTES_MIN));
   mrb_define_const(mrb, hydro_hash_cl, "CONTEXTBYTES", mrb_fixnum_value(hydro_hash_CONTEXTBYTES));
   mrb_define_const(mrb, hydro_hash_cl, "KEYBYTES", mrb_fixnum_value(hydro_hash_KEYBYTES));
-  mrb_define_class_method(mrb, hydro_hash_cl, "keygen", mrb_hydro_hash_keygen, MRB_ARGS_REQ(1));
+  mrb_define_class_method(mrb, hydro_hash_cl, "keygen", mrb_hydro_hash_keygen, MRB_ARGS_NONE());
   mrb_define_method(mrb, hydro_hash_cl, "initialize", mrb_hydro_hash_init, MRB_ARGS_ARG(1, 1));
   mrb_define_method(mrb, hydro_hash_cl, "update", mrb_hydro_hash_update, MRB_ARGS_REQ(1));
   mrb_define_alias(mrb, hydro_hash_cl, "<<", "update");
