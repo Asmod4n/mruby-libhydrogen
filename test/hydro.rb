@@ -4,15 +4,15 @@ assert("Hydro::Random") do
   b = 0
   tmp = Hydro::Random.buf(10000)
   tmp.bytesize.times do |i|
-    b += ((tmp[i].ord) >> 0) & 1
+    b += ((tmp.getbyte(i)) >> 0) & 1
   end
   assert_true(b > 4500 && b < 5500)
 
-  dk = tmp[0...Hydro::Random::SEEDBYTES]
+  dk = tmp.byteslice(0, Hydro::Random::SEEDBYTES)
   b = 0
   tmp = Hydro::Random.buf_deterministic(10000, dk)
   tmp.bytesize.times do |i|
-    b += ((tmp[i].ord) >> 0) & 1
+    b += ((tmp.getbyte(i)) >> 0) & 1
   end
   assert_true(b > 4500 && b < 5500)
 
@@ -20,7 +20,7 @@ assert("Hydro::Random") do
   b = 0
   tmp = Hydro::Random.buf_deterministic(10000, dk)
   tmp.bytesize.times do |i|
-    b += ((tmp[i].ord) >> 0) & 1
+    b += ((tmp.getbyte(i)) >> 0) & 1
   end
   assert_equal(b, bp)
 end

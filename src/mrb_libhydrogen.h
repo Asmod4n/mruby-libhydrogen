@@ -19,28 +19,23 @@
 # define unlikely(x) (x)
 #endif
 
-MRB_INLINE void
-mrb_hydro_check_length(mrb_state *mrb, mrb_int obj_size, int hydro_const, const char *type)
-{
-  if (unlikely(obj_size != hydro_const)) {
-    mrb_raisef(mrb, E_ARGUMENT_ERROR, "expected a length == %S bytes %S, got %S bytes",
-      mrb_fixnum_value(hydro_const),
-      mrb_str_new_static(mrb, type, strlen(type)),
-      mrb_fixnum_value(obj_size));
+#define mrb_hydro_check_length(mrb, obj_size, hydro_const, type_lit) \
+  if (unlikely((obj_size) != (hydro_const))) { \
+    mrb_raisef((mrb), E_ARGUMENT_ERROR, "expected a length == %S bytes %S, got %S bytes", \
+      mrb_fixnum_value(hydro_const), \
+      mrb_str_new_lit(mrb, type_lit), \
+      mrb_fixnum_value(obj_size)); \
   }
-}
 
-MRB_INLINE void
-mrb_hydro_check_length_between(mrb_state *mrb, mrb_int obj_size, int min, int max, const char *type)
-{
-  if (unlikely(obj_size < min||obj_size > max)) {
-    mrb_raisef(mrb, E_ARGUMENT_ERROR, "expected a length between %S and %S (inclusive) bytes %S, got %S bytes",
-      mrb_fixnum_value(min),
-      mrb_fixnum_value(max),
-      mrb_str_new_static(mrb, type, strlen(type)),
-      mrb_fixnum_value(obj_size));
+#define mrb_hydro_check_length_between(mrb, obj_size, min, max, type_lit) \
+  if (unlikely((obj_size) < (min) || (obj_size) > (max))) { \
+    mrb_raisef((mrb), E_ARGUMENT_ERROR, "expected a length between %S and %S (inclusive) bytes %S, got %S bytes", \
+      mrb_fixnum_value(min), \
+      mrb_fixnum_value(max), \
+      mrb_str_new_lit(mrb, type_lit), \
+      mrb_fixnum_value(obj_size)); \
   }
-}
+
 
 static const struct mrb_data_type mrb_hydro_hash_state = {
   "$mrb_i_hydro_hash_state", mrb_free
