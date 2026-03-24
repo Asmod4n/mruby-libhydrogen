@@ -9,6 +9,7 @@ mrb_hydro_sign_create(mrb_state *mrb, mrb_value hydro_sign_class)
   mrb_hydro_check_length(mrb, RSTRING_LEN(sk), hydro_sign_SECRETKEYBYTES, "sk");
 
   mrb_value csig = mrb_str_new(mrb, NULL, hydro_sign_BYTES);
+  mrb_gc_protect(mrb, csig);
   int rc = hydro_sign_create((uint8_t *) RSTRING_PTR(csig),
     RSTRING_PTR(m_), RSTRING_LEN(m_),
     ctx,
@@ -52,8 +53,11 @@ mrb_hydro_sign_keygen(mrb_state *mrb, mrb_value hydro_sign_class)
   }
 
   mrb_value keypair_val = mrb_hash_new_capa(mrb, 2);
+  mrb_gc_protect(mrb, keypair_val);
   mrb_value pk = mrb_str_new(mrb, (const char *) keypair.pk, hydro_sign_PUBLICKEYBYTES);
+  mrb_gc_protect(mrb, pk);
   mrb_value sk = mrb_str_new(mrb, (const char *) keypair.sk, hydro_sign_SECRETKEYBYTES);
+  mrb_gc_protect(mrb, sk);
   mrb_hash_set(mrb, keypair_val, mrb_symbol_value(mrb_intern_lit(mrb, "pk")), pk);
   mrb_hash_set(mrb, keypair_val, mrb_symbol_value(mrb_intern_lit(mrb, "sk")), sk);
 

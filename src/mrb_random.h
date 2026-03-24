@@ -25,6 +25,7 @@ mrb_hydro_random_buf(mrb_state *mrb, mrb_value hydro_random_module)
   mrb_get_args(mrb, "i", &len);
   mrb_assert_int_fit(mrb_int, len, size_t, SIZE_MAX);
   mrb_value buf = mrb_str_new(mrb, NULL, len);
+  mrb_gc_protect(mrb, buf);
 
   hydro_random_buf(RSTRING_PTR(buf), len);
 
@@ -40,6 +41,7 @@ mrb_hydro_random_buf_deterministic(mrb_state *mrb, mrb_value hydro_random_module
   mrb_assert_int_fit(mrb_int, len, size_t, SIZE_MAX);
   mrb_hydro_check_length(mrb, RSTRING_LEN(seed), hydro_random_SEEDBYTES, "seed");
   mrb_value buf = mrb_str_new(mrb, NULL, len);
+  mrb_gc_protect(mrb, buf);
 
   hydro_random_buf_deterministic(RSTRING_PTR(buf), len, (const uint8_t *) RSTRING_PTR(seed));
 

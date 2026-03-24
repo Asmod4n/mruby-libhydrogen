@@ -9,12 +9,10 @@ mrb_hydro_secretbox_keygen(mrb_state *mrb, mrb_value hydro_secretbox_class)
 static mrb_value
 mrb_hydro_secretbox_encrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 {
-  mrb_value m;
-  const char *ctx;
-  mrb_value key;
+  mrb_value m, ctx, key;
   mrb_int msg_id = 0;
-  mrb_get_args(mrb, "SzS|i", &m, &ctx, &key, &msg_id);
-  mrb_hydro_check_length(mrb, strlen(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
+  mrb_get_args(mrb, "SSS|i", &m, &ctx, &key, &msg_id);
+  mrb_hydro_check_length(mrb, RSTRING_LEN(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_secretbox_KEYBYTES, "key");
   mrb_assert_int_fit(mrb_int, msg_id, uint64_t, UINT64_MAX);
   mrb_int ciphertext_len;
@@ -22,11 +20,12 @@ mrb_hydro_secretbox_encrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
     mrb_raise(mrb, E_RANGE_ERROR, "mlen is too large");
   }
   mrb_value ciphertext = mrb_str_new(mrb, NULL, ciphertext_len);
+  mrb_gc_protect(mrb, ciphertext);
 
   int rc = hydro_secretbox_encrypt((uint8_t *) RSTRING_PTR(ciphertext),
     RSTRING_PTR(m), RSTRING_LEN(m),
     msg_id,
-    ctx,
+    RSTRING_CSTR(mrb, ctx),
     (const uint8_t *) RSTRING_PTR(key));
   assert(rc == 0);
 
@@ -36,23 +35,22 @@ mrb_hydro_secretbox_encrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 static mrb_value
 mrb_hydro_secretbox_decrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 {
-  mrb_value c;
-  const char *ctx;
-  mrb_value key;
+  mrb_value c, ctx, key;
   mrb_int msg_id = 0;
-  mrb_get_args(mrb, "SzS|i", &c, &ctx, &key, &msg_id);
+  mrb_get_args(mrb, "SSS|i", &c, &ctx, &key, &msg_id);
   if (RSTRING_LEN(c) < hydro_secretbox_HEADERBYTES) {
     mrb_raise(mrb, E_RANGE_ERROR, "ciphertext is too short");
   }
-  mrb_hydro_check_length(mrb, strlen(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
+  mrb_hydro_check_length(mrb, RSTRING_LEN(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_secretbox_KEYBYTES, "key");
   mrb_assert_int_fit(mrb_int, msg_id, uint64_t, UINT64_MAX);
   mrb_value m = mrb_str_new(mrb, NULL, RSTRING_LEN(c) - hydro_secretbox_HEADERBYTES);
+  mrb_gc_protect(mrb, m);
 
   int rc = hydro_secretbox_decrypt(RSTRING_PTR(m),
     (const uint8_t *) RSTRING_PTR(c), RSTRING_LEN(c),
     msg_id,
-    ctx,
+    RSTRING_CSTR(mrb, ctx),
     (const uint8_t *) RSTRING_PTR(key));
 
   if (rc != 0) {
@@ -65,20 +63,19 @@ mrb_hydro_secretbox_decrypt(mrb_state *mrb, mrb_value hydro_secretbox_module)
 static mrb_value
 mrb_hydro_secretbox_probe_create(mrb_state *mrb, mrb_value hydro_secretbox_module)
 {
-  mrb_value c;
-  const char *ctx;
-  mrb_value key;
-  mrb_get_args(mrb, "SzS", &c, &ctx, &key);
+  mrb_value c, ctx, key;
+  mrb_get_args(mrb, "SSS", &c, &ctx, &key);
   if (RSTRING_LEN(c) < hydro_secretbox_HEADERBYTES) {
     mrb_raise(mrb, E_RANGE_ERROR, "ciphertext is too short");
   }
-  mrb_hydro_check_length(mrb, strlen(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
+  mrb_hydro_check_length(mrb, RSTRING_LEN(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_secretbox_KEYBYTES, "key");
   mrb_value probe = mrb_str_new(mrb, NULL, hydro_secretbox_PROBEBYTES);
+  mrb_gc_protect(mrb, probe);
 
   hydro_secretbox_probe_create((uint8_t *) RSTRING_PTR(probe),
     (const uint8_t *) RSTRING_PTR(c), RSTRING_LEN(c),
-    ctx,
+    RSTRING_CSTR(mrb, ctx),
     (const uint8_t *) RSTRING_PTR(key));
 
   return probe;
@@ -87,20 +84,18 @@ mrb_hydro_secretbox_probe_create(mrb_state *mrb, mrb_value hydro_secretbox_modul
 static mrb_value
 mrb_hydro_secretbox_probe_verify(mrb_state *mrb, mrb_value hydro_secretbox_module)
 {
-  mrb_value probe, c;
-  const char *ctx;
-  mrb_value key;
-  mrb_get_args(mrb, "SSzS", &probe, &c, &ctx, &key);
+  mrb_value probe, c, ctx, key;
+  mrb_get_args(mrb, "SSSS", &probe, &c, &ctx, &key);
   mrb_hydro_check_length(mrb, RSTRING_LEN(probe), hydro_secretbox_PROBEBYTES, "probe");
   if (RSTRING_LEN(c) < hydro_secretbox_HEADERBYTES) {
     mrb_raise(mrb, E_RANGE_ERROR, "ciphertext is too short");
   }
-  mrb_hydro_check_length(mrb, strlen(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
+  mrb_hydro_check_length(mrb, RSTRING_LEN(ctx), hydro_secretbox_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_secretbox_KEYBYTES, "key");
 
   int rc = hydro_secretbox_probe_verify((const uint8_t *) RSTRING_PTR(probe),
     (const uint8_t *) RSTRING_PTR(c), RSTRING_LEN(c),
-    ctx,
+    RSTRING_CSTR(mrb, ctx),
     (const uint8_t *) RSTRING_PTR(key));
 
   return mrb_bool_value(rc == 0);

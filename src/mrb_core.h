@@ -23,6 +23,7 @@ mrb_hydro_bin2hex(mrb_state *mrb, mrb_value hydro_mod)
   }
 
   mrb_value hex = mrb_str_new(mrb, NULL, hex_len);
+  mrb_gc_protect(mrb, hex);
   char *h = hydro_bin2hex(RSTRING_PTR(hex), RSTRING_LEN(hex) + 1,
     (const uint8_t *) bin, bin_len);
   assert(h);

@@ -70,6 +70,7 @@ mrb_hydro_hash_hash(mrb_state *mrb, mrb_value hydro_hash_class)
     mrb_hydro_check_length(mrb, key_len, hydro_hash_KEYBYTES, "key");
   }
   mrb_value out = mrb_str_new(mrb, NULL, out_len);
+  mrb_gc_protect(mrb, out);
 
   int rc = hydro_hash_hash((uint8_t *) RSTRING_PTR(out), out_len,
     RSTRING_PTR(in), RSTRING_LEN(in),

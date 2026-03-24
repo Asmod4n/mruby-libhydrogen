@@ -18,6 +18,7 @@ mrb_hydro_kdf_derive_from_key(mrb_state *mrb, mrb_value hydro_kdf_module)
   mrb_hydro_check_length(mrb, strlen(ctx), hydro_kdf_CONTEXTBYTES, "ctx");
   mrb_hydro_check_length(mrb, RSTRING_LEN(key), hydro_kdf_KEYBYTES, "key");
   mrb_value subkey = mrb_str_new(mrb, NULL, subkey_len);
+  mrb_gc_protect(mrb, subkey);
 
   int rc = hydro_kdf_derive_from_key((uint8_t *) RSTRING_PTR(subkey), subkey_len,
     subkey_id,

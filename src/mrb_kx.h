@@ -17,6 +17,7 @@ mrb_hydro_kx_xx_1(mrb_state *mrb, mrb_value self)
   }
 
   mrb_value packet1 = mrb_str_new(mrb, NULL, hydro_kx_XX_PACKET1BYTES);
+  mrb_gc_protect(mrb, packet1);
   int rc = hydro_kx_xx_1(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     (uint8_t *) RSTRING_PTR(packet1),
     (const uint8_t *) psk);
@@ -38,6 +39,7 @@ mrb_hydro_kx_xx_2(mrb_state *mrb, mrb_value self)
   }
 
   mrb_value packet2 = mrb_str_new(mrb, NULL, hydro_kx_XX_PACKET2BYTES);
+  mrb_gc_protect(mrb, packet2);
   int rc = hydro_kx_xx_2(DATA_GET_PTR(mrb, self, &mrb_hydro_kx_state, hydro_kx_state),
     (uint8_t *) RSTRING_PTR(packet2),
     (const uint8_t *) RSTRING_PTR(packet1),
@@ -66,11 +68,17 @@ mrb_hydro_kx_xx_3(mrb_state *mrb, mrb_value self)
 
   hydro_kx_session_keypair kp;
   mrb_value out = mrb_ary_new_capa(mrb, 3);
+  mrb_gc_protect(mrb, out);
   mrb_value keypair = mrb_hash_new_capa(mrb, 2);
+  mrb_gc_protect(mrb, keypair);
   mrb_value rx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_gc_protect(mrb, rx);
   mrb_value tx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_gc_protect(mrb, tx);
   mrb_value packet3 = mrb_str_new(mrb, NULL, hydro_kx_XX_PACKET3BYTES);
+  mrb_gc_protect(mrb, packet3);
   mrb_value peer_static_pk = mrb_str_new(mrb, NULL, hydro_kx_PUBLICKEYBYTES);
+  mrb_gc_protect(mrb, peer_static_pk);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "rx")), rx);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "tx")), tx);
   mrb_ary_push(mrb, out, keypair);
@@ -109,10 +117,15 @@ mrb_hydro_kx_xx_4(mrb_state *mrb, mrb_value self)
 
   hydro_kx_session_keypair kp;
   mrb_value out = mrb_ary_new_capa(mrb, 2);
+  mrb_gc_protect(mrb, out);
   mrb_value keypair = mrb_hash_new_capa(mrb, 2);
+  mrb_gc_protect(mrb, keypair);
   mrb_value rx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_gc_protect(mrb, rx);
   mrb_value tx = mrb_str_new(mrb, NULL, hydro_kx_SESSIONKEYBYTES);
+  mrb_gc_protect(mrb, tx);
   mrb_value peer_static_pk = mrb_str_new(mrb, NULL, hydro_kx_PUBLICKEYBYTES);
+  mrb_gc_protect(mrb, peer_static_pk);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "rx")), rx);
   mrb_hash_set(mrb, keypair, mrb_symbol_value(mrb_intern_lit(mrb, "tx")), tx);
   mrb_ary_push(mrb, out, keypair);
